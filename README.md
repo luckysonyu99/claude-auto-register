@@ -2,6 +2,12 @@
 
 🤖 Claude 账号全自动注册工具 - 基于 LuckMail 接码 + Playwright 浏览器自动化
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Playwright](https://img.shields.io/badge/playwright-1.40+-green.svg)](https://playwright.dev/)
+
+> 🚀 一键自动化注册 Claude 账号，支持批量注册、智能表单检测、无头模式运行
+
 ## ✨ 特性
 
 - 🚀 **全自动注册** - 从购买邮箱到完成注册，全程自动化
@@ -57,9 +63,25 @@ mkdir -p ~/codex-console
 cp -r /path/to/luckmail ~/codex-console/
 ```
 
+## 📖 文档
+
+- [使用示例](EXAMPLES.md) - 详细的使用场景和示例
+- [故障排查](TROUBLESHOOTING.md) - 常见问题解决方案
+- [贡献指南](CONTRIBUTING.md) - 如何参与项目开发
+
 ## 🚀 快速开始
 
-### 全自动注册（推荐）
+### 方式一：使用启动脚本（最简单）
+
+```bash
+./start.sh
+```
+
+脚本会自动检查环境、提示输入配置，适合新手使用。
+
+### 方式二：命令行运行
+
+#### 全自动注册（推荐）
 
 ```bash
 # 单个账号注册（带界面，方便调试）
@@ -260,13 +282,31 @@ playwright install chromium
 - 手动浏览器操作
 - 基础接码功能
 
-## 📄 License
+## 📊 项目统计
 
-MIT License
+- **代码行数**: ~500 行
+- **支持平台**: macOS, Linux, Windows
+- **Python 版本**: 3.8+
+- **浏览器**: Chromium (Playwright)
+
+## 🗺️ 路线图
+
+- [x] 基础自动化注册
+- [x] 智能表单检测
+- [x] 批量注册支持
+- [x] 无头模式
+- [ ] GUI 界面
+- [ ] Docker 支持
+- [ ] 更多邮箱服务商支持
+- [ ] 代理支持
 
 ## 🤝 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎贡献！请查看 [贡献指南](CONTRIBUTING.md)。
+
+### 贡献者
+
+感谢所有贡献者的付出！
 
 ## ⚡ 技术栈
 
@@ -275,10 +315,30 @@ MIT License
 - **LuckMail SDK** - 邮箱购买和接码
 - **httpx** - HTTP 客户端
 
-## 📧 联系方式
+## 📧 支持
 
-如有问题或建议，欢迎提交 Issue。
+- 📝 [提交 Issue](https://github.com/luckysonyu99/claude-auto-register/issues)
+- 💬 [参与讨论](https://github.com/luckysonyu99/claude-auto-register/discussions)
+- 📖 [查看文档](https://github.com/luckysonyu99/claude-auto-register/wiki)
+
+## ⭐ Star History
+
+如果这个项目对你有帮助，请给个 Star ⭐️
+
+## 📄 License
+
+本项目采用 [MIT License](LICENSE) 开源协议。
+
+## 🙏 致谢
+
+- [Playwright](https://playwright.dev/) - 强大的浏览器自动化工具
+- [LuckMail](https://mails.luckyous.com/) - 可靠的接码服务
+- 所有贡献者和使用者
+
+## ⚠️ 免责声明
+
+本工具仅供学习和研究使用，请遵守相关服务条款和法律法规。使用本工具产生的任何后果由使用者自行承担。
 
 ---
 
-**免责声明**：本工具仅供学习和研究使用，请遵守相关服务条款和法律法规。
+Made with ❤️ by [luckysonyu99](https://github.com/luckysonyu99)
