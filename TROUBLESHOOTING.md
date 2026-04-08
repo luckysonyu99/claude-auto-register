@@ -79,21 +79,43 @@ playwright install --help
 **错误信息：**
 ```
 ❌ 未找到 luckmail SDK
-   请确保 /Users/xxx/codex-console/luckmail 存在
+   请将 luckmail SDK 放置到以下任一位置：
+   1. /path/to/claude-auto-register/luckmail (推荐)
+   2. /Users/xxx/luckmail
+   3. 或设置环境变量: export LUCKMAIL_SDK_PATH=/path/to/luckmail
 ```
 
 **解决方案：**
+
+**方式一：放到项目目录（推荐）**
 ```bash
-# 1. 检查 SDK 是否存在
-ls ~/codex-console/luckmail
+# 进入项目目录
+cd /path/to/claude-auto-register
 
-# 2. 如果不存在，创建目录并复制 SDK
-mkdir -p ~/codex-console
-cp -r /path/to/luckmail ~/codex-console/
+# 复制 SDK
+cp -r /path/to/luckmail ./
 
-# 3. 验证 SDK 结构
-ls ~/codex-console/luckmail
-# 应该看到: __init__.py, client.py, user.py 等文件
+# 验证
+ls luckmail/__init__.py
+```
+
+**方式二：放到用户目录**
+```bash
+# 复制到用户目录
+cp -r /path/to/luckmail ~/luckmail
+
+# 验证
+ls ~/luckmail/__init__.py
+```
+
+**方式三：使用环境变量**
+```bash
+# 临时设置（当前会话有效）
+export LUCKMAIL_SDK_PATH=/path/to/luckmail
+
+# 永久设置（添加到 ~/.zshrc 或 ~/.bashrc）
+echo 'export LUCKMAIL_SDK_PATH=/path/to/luckmail' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ### ❌ API Key 无效

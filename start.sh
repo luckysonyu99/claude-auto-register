@@ -31,9 +31,23 @@ if ! python3 -c "import httpx" 2>/dev/null; then
 fi
 
 # 检查 LuckMail SDK
-if [ ! -d "$HOME/codex-console/luckmail" ]; then
+SDK_FOUND=false
+if [ -d "$(dirname "$0")/luckmail" ]; then
+    SDK_FOUND=true
+elif [ -d "$HOME/luckmail" ]; then
+    SDK_FOUND=true
+elif [ -n "$LUCKMAIL_SDK_PATH" ] && [ -d "$LUCKMAIL_SDK_PATH" ]; then
+    SDK_FOUND=true
+elif [ -d "$HOME/codex-console/luckmail" ]; then
+    SDK_FOUND=true
+fi
+
+if [ "$SDK_FOUND" = false ]; then
     echo -e "${RED}❌ LuckMail SDK 未找到${NC}"
-    echo "   请将 LuckMail SDK 放置到: ~/codex-console/luckmail"
+    echo "   请将 LuckMail SDK 放置到以下任一位置："
+    echo "   1. $(dirname "$0")/luckmail (推荐)"
+    echo "   2. $HOME/luckmail"
+    echo "   3. 或设置环境变量: export LUCKMAIL_SDK_PATH=/path/to/luckmail"
     exit 1
 fi
 

@@ -56,11 +56,34 @@ playwright install chromium
 
 ### 3. 安装 LuckMail SDK
 
-将 LuckMail SDK 放置到 `~/codex-console/luckmail` 目录：
+将 LuckMail SDK 放置到以下任一位置：
 
+**方式一：项目目录（推荐）**
 ```bash
-mkdir -p ~/codex-console
-cp -r /path/to/luckmail ~/codex-console/
+# 将 SDK 复制到项目目录
+cp -r /path/to/luckmail ./
+```
+
+**方式二：用户目录**
+```bash
+# 将 SDK 复制到用户目录
+cp -r /path/to/luckmail ~/luckmail
+```
+
+**方式三：环境变量**
+```bash
+# 设置环境变量指向 SDK 路径
+export LUCKMAIL_SDK_PATH=/path/to/luckmail
+```
+
+SDK 目录结构应该是：
+```
+luckmail/
+├── __init__.py
+├── client.py
+├── user.py
+├── models.py
+└── ...
 ```
 
 ## 📖 文档

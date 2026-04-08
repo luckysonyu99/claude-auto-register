@@ -5,21 +5,36 @@ Claude 账号注册助手 - 简化版
 """
 
 import sys
+import os
 import time
 import json
 from pathlib import Path
 from typing import Optional, Dict, Any
 
 # 添加 luckmail SDK 路径
-LUCKMAIL_PATH = Path.home() / "codex-console" / "luckmail"
-if LUCKMAIL_PATH.exists():
-    sys.path.insert(0, str(LUCKMAIL_PATH))
+# 优先级：环境变量 > 当前目录 > 默认路径
+LUCKMAIL_PATHS = [
+    Path(os.environ.get("LUCKMAIL_SDK_PATH", "")),  # 环境变量
+    Path(__file__).parent / "luckmail",              # 当前目录
+    Path.home() / "luckmail",                        # 用户目录
+    Path.home() / "codex-console" / "luckmail",      # 兼容旧路径
+]
+
+LUCKMAIL_PATH = None
+for path in LUCKMAIL_PATHS:
+    if path.exists() and (path / "__init__.py").exists():
+        LUCKMAIL_PATH = path
+        sys.path.insert(0, str(path.parent))
+        break
 
 try:
     from luckmail import LuckMailClient
 except ImportError:
     print("❌ 未找到 luckmail SDK")
-    print(f"   请确保 {LUCKMAIL_PATH} 存在")
+    print("   请将 luckmail SDK 放置到以下任一位置：")
+    print(f"   1. {Path(__file__).parent / 'luckmail'} (推荐)")
+    print(f"   2. {Path.home() / 'luckmail'}")
+    print(f"   3. 或设置环境变量: export LUCKMAIL_SDK_PATH=/path/to/luckmail")
     sys.exit(1)
 
 
