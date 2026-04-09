@@ -286,57 +286,183 @@ class ClaudeAutoRegister:
             page.goto(self.claude_url, wait_until="networkidle")
             time.sleep(2)
 
-            # 2. 点击"添加账号"按钮
+            # 2. 检查是否需要登录
+            if "/login" in page.url:
+                self.log("检测到登录页面，正在登录...", "BROWSER")
+
+                # 填写密码
+                password_input = page.locator('input[type="password"], input[name="password"]').first
+                password_input.fill("luckysonyu99")
+                time.sleep(1)
+
+                # 点击登录按钮
+                login_button = page.locator('button[type="submit"], button:has-text("登录"), button:has-text("Login")').first
+                login_button.click()
+                time.sleep(3)
+
+                self.log("登录成功", "SUCCESS")
+
+            # 3. 导航到账号管理页面
+            self.log("导航到账号管理页面", "BROWSER")
+
+            # 尝试多种方式找到账号管理链接
+            account_mgmt_selectors = [
+                'a:has-text("账号管理")',
+                'a:has-text("账号")',
+                'a[href*="account"]',
+                'text=账号管理',
+            ]
+
+            navigated = False
+            for selector in account_mgmt_selectors:
+                try:
+                    link = page.locator(selector).first
+                    if link.is_visible(timeout=2000):
+                        link.click()
+                        time.sleep(2)
+                        navigated = True
+                        self.log("已进入账号管理页面", "SUCCESS")
+                        break
+                except:
+                    continue
+
+            if not navigated:
+                self.log("未找到账号管理页面链接，尝试直接访问", "INFO")
+                # 尝试常见的账号管理路径
+                for path in ["/accounts", "/account", "/management/accounts"]:
+                    try:
+                        page.goto(f"{self.claude_url}{path}", wait_until="networkidle")
+                        time.sleep(2)
+                        if "404" not in page.content():
+                            navigated = True
+                            break
+                    except:
+                        continue
+
+            if not navigated:
+                self.log("无法找到账号管理页面", "ERROR")
+                return False
+
+            # 4. 点击"添加账号"按钮
             self.log("点击「添加账号」按钮", "BROWSER")
-            add_button = page.locator('button:has-text("添加账号")')
-            if not add_button.is_visible():
+            add_button = page.locator('button:has-text("添加账号"), button:has-text("添加"), button:has-text("Add Account")').first
+            if not add_button.is_visible(timeout=5000):
                 self.log("未找到「添加账号」按钮", "ERROR")
                 return False
             add_button.click()
             time.sleep(2)
 
-            # 3. 点击"我已知晓"确认弹窗
+            # 5. 点击"我已知晓"确认弹窗，并监听新窗口
             self.log("点击「我已知晓」确认", "BROWSER")
             confirm_button = page.locator('button:has-text("我已知晓")')
-            if confirm_button.is_visible():
-                confirm_button.click()
-                time.sleep(2)
+            if confirm_button.is_visible(timeout=3000):
+                # 设置监听新页面
+                new_pages = []
 
-            # 4. 获取 AWS 认证链接
-            self.log("获取 AWS 认证链接", "LINK")
-            # 尝试多种可能的选择器
-            auth_link = None
-            selectors = [
-                'a[href*="awsapps.com"]',
-                'a[href*="view.awsapps.com"]',
-                'text=/https:\/\/view\.awsapps\.com/',
+                def handle_page(new_page):
+                    new_pages.append(new_page)
+                    self.log(f"捕获到新页面: {new_page.url}", "INFO")
+
+                page.context.on("page", handle_page)
+
+                # 点击按钮
+                confirm_button.click()
+
+                # 等待新页面打开
+                self.log("等待新窗口打开...", "WAIT")
+                time.sleep(8)  # 给足够时间让窗口打开
+
+                # 移除监听器
+                page.context.remove_listener("page", handle_page)
+
+            # 6. 处理打开的新窗口
+            self.log("等待 AWS 授权窗口打开", "BROWSER")
+
+            # 等待足够的时间让新窗口打开
+            time.sleep(5)
+
+            # 获取所有页面（包括新打开的）
+            all_pages = page.context.pages
+            self.log(f"当前共有 {len(all_pages)} 个页面", "INFO")
+
+            # 找到 AWS 授权页面和临时邮箱页面
+            auth_page = None
+            tempmail_page = None
+
+            for p in all_pages:
+                url = p.url
+                self.log(f"页面: {url}", "INFO")
+                if "awsapps.com" in url:
+                    auth_page = p
+                elif "tempmail" in url or "temp-mail" in url:
+                    tempmail_page = p
+
+            # 如果还没找到，再等待一下
+            if not auth_page:
+                self.log("等待新窗口加载...", "WAIT")
+                time.sleep(3)
+                all_pages = page.context.pages
+                for p in all_pages:
+                    url = p.url
+                    if "awsapps.com" in url:
+                        auth_page = p
+                    elif "tempmail" in url or "temp-mail" in url:
+                        tempmail_page = p
+
+            # 关闭临时邮箱页面
+            if tempmail_page:
+                self.log("关闭临时邮箱页面", "BROWSER")
+                tempmail_page.close()
+
+            if not auth_page:
+                self.log("未找到 AWS 授权页面", "ERROR")
+                return False
+
+            self.log(f"使用 AWS 授权页面: {auth_page.url}", "SUCCESS")
+
+            # 等待页面加载（增加超时时间）
+            try:
+                auth_page.wait_for_load_state("domcontentloaded", timeout=60000)
+            except:
+                self.log("页面加载超时，继续尝试", "INFO")
+
+            time.sleep(3)
+
+            # 截图调试
+            screenshot_path = f"debug_aws_page_{int(time.time())}.png"
+            auth_page.screenshot(path=screenshot_path)
+            self.log(f"已保存页面截图: {screenshot_path}", "INFO")
+
+            # 7. 填入邮箱地址
+            self.log(f"填入邮箱: {self.email}", "EMAIL")
+
+            # 尝试多种邮箱输入框选择器
+            email_selectors = [
+                'input[type="email"]',
+                'input[name="email"]',
+                'input[name="emailAddress"]',
+                'input[placeholder*="email"]',
+                'input[placeholder*="Email"]',
+                'input[id*="email"]',
+                'input[autocomplete="email"]',
             ]
 
-            for selector in selectors:
+            email_filled = False
+            for selector in email_selectors:
                 try:
-                    link_element = page.locator(selector).first
-                    if link_element.is_visible():
-                        auth_link = link_element.get_attribute("href") or link_element.inner_text()
+                    email_input = auth_page.locator(selector).first
+                    if email_input.is_visible(timeout=2000):
+                        email_input.fill(self.email)
+                        email_filled = True
+                        self.log(f"使用选择器 {selector} 成功填入邮箱", "SUCCESS")
                         break
                 except:
                     continue
 
-            if not auth_link:
-                self.log("未找到 AWS 认证链接", "ERROR")
+            if not email_filled:
+                self.log("未找到邮箱输入框", "ERROR")
                 return False
 
-            self.log(f"获取到认证链接: {auth_link}", "LINK")
-
-            # 5. 在新标签页打开认证链接
-            self.log("打开 AWS 认证页面", "BROWSER")
-            auth_page = page.context.new_page()
-            auth_page.goto(auth_link, wait_until="networkidle")
-            time.sleep(2)
-
-            # 6. 填入邮箱地址
-            self.log(f"填入邮箱: {self.email}", "EMAIL")
-            email_input = auth_page.locator('input[type="email"], input[name="email"], input[placeholder*="email"]').first
-            email_input.fill(self.email)
             time.sleep(1)
 
             # 点击下一步/继续按钮
@@ -344,7 +470,7 @@ class ClaudeAutoRegister:
             next_button.click()
             time.sleep(3)
 
-            # 7-10. 智能检测并填写后续表单（最多尝试 10 次）
+            # 8-11. 智能检测并填写后续表单（最多尝试 10 次）
             self.log("开始智能表单填写流程", "BROWSER")
             max_attempts = 10
             filled_count = 0
@@ -381,7 +507,7 @@ class ClaudeAutoRegister:
                     self.log("已返回 Claude Server", "SUCCESS")
                     break
 
-            # 11. 检查是否注册成功
+            # 12. 检查是否注册成功
             time.sleep(3)
 
             if filled_count >= 3:  # 至少填写了 3 个表单（姓名、验证码、密码等）
